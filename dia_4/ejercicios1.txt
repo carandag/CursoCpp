@@ -1,0 +1,52 @@
+Resumen para presentar
+
+¿Qué hace el programa?
+Es una versión simplificada de Paint que funciona por texto. El usuario escribe comandos como add circulo 5.0 Azul 10 20 y el programa crea figuras, las mueve, las duplica, 
+y permite deshacer y rehacer cualquier acción.
+Por dentro, el código está organizado aplicando cuatro patrones de diseño que resuelven cuatro problemas distintos.
+
+El .h — el plano del edificio
+El archivo .h es la declaración: define qué existe, qué puede hacer cada cosa, y cómo se relacionan entre sí. No dice cómo se hace nada, solo qué hay.
+Puedes pensar en él como los planos de un edificio: describen cuántas habitaciones hay, qué puertas conectan con qué, pero no el trabajo de construcción en sí.
+Tiene cinco bloques principales:
+1. Figura — el contrato común
+Es una clase abstracta: no se puede crear directamente, pero obliga a todo el que herede de ella a implementar dibujar(), calcularArea(), mover(), y clone(). 
+Es como un contrato laboral: si quieres ser una figura en este programa, tienes que saber hacer estas cosas.
+2. Clonable<T> — el atajo para copiar
+Es una pequeña plantilla que implementa automáticamente el método clone() para cualquier figura. Sin ella, cada figura tendría que escribir su propio código de copia, 
+que sería idéntico en todas. Con ella, se escribe una vez y todas lo heredan.
+3. Circulo y Rectangulo — las figuras concretas
+Son las implementaciones reales. Cada una guarda sus propios datos (radio, color, posición...) y sabe cómo dibujarse y moverse. Si mañana quisieras añadir un triángulo, 
+crearías una clase igual de sencilla sin tocar nada de lo demás.
+4. FabricaFiguras — la factoría
+Es el intermediario entre el texto que escribe el usuario y los objetos del programa. El usuario escribe circulo 5.0 Azul 10 20; la fábrica lo convierte en un objeto Circulo 
+real. Lo importante es que la fábrica tiene un registro: cada tipo de figura se apunta en una lista al inicio del programa. Cuando llega una línea de texto, la fábrica mira 
+la lista y llama al constructor correcto. Añadir una figura nueva solo requiere apuntarla en esa lista, sin modificar la fábrica.
+5. Canvas, Command y GestorComandos — la arquitectura de acciones
+El Canvas es el lienzo donde viven todas las figuras. Es un Singleton: solo existe uno en todo el programa, accesible desde cualquier sitio. Las acciones del usuario (añadir, 
+mover) no tocan el canvas directamente, sino que se convierten en objetos Command. El GestorComandos los ejecuta y los apila, lo que hace posible deshacer y rehacer.
+
+El .cpp — la construcción real
+El archivo .cpp es la implementación: aquí está el código que realmente se ejecuta. Sigue el mismo orden que el .h y rellena cada método declarado allí.
+Tiene cinco partes:
+1. Las figuras hacen lo que prometieron
+Circulo y Rectangulo implementan sus métodos: calcularArea() aplica la fórmula matemática, dibujar() imprime los datos por pantalla, mover() actualiza las coordenadas. 
+Nada sorprendente.
+2. La fábrica busca en su registro
+Cuando llega una línea de texto, FabricaFiguras::crear() lee la primera palabra, busca en el mapa si existe un constructor para ese nombre, y lo llama. Si no existe, 
+lanza un error. No hay ningún if por tipo de figura: el mapa hace ese trabajo.
+3. El Canvas guarda y devuelve figuras
+Además de añadir y mostrar figuras, el Canvas tiene métodos auxiliares como extraer() (saca una figura concreta) y vaciar() (saca todas). Estos métodos existen exclusivamente 
+para que los comandos puedan deshacer sus acciones.
+4. Los comandos recuerdan lo que hicieron
+AnadirFiguraCommand guarda la figura antes de añadirla al canvas. Si se deshace, la recupera. MoverFiguraCommand guarda la posición original antes de mover. Si se deshace, 
+vuelve a esa posición. Cada comando lleva consigo toda la información necesaria para revertirse, sin que nadie más tenga que recordarla.
+5. El main simula la interfaz gráfica
+Lee comandos por teclado y los traduce en acciones. Nunca crea figuras directamente: usa la fábrica. Nunca toca el canvas directamente: usa el gestor de comandos. Es el único 
+sitio del programa donde se conectan todas las piezas.
+
+Por qué está organizado así
+Cada patrón resuelve un problema concreto:
+PatrónProblema que resuelveFactory MethodCrear el objeto correcto a partir de texto, sin que el resto del código sepa qué tipos existenPrototypeCopiar una figura sin saber qué 
+tipo es exactamenteSingletonGarantizar que solo hay un canvas en todo el programaCommandPoder deshacer y rehacer acciones convirtiendo cada acción en un objeto
+Y todos juntos cumplen los principios SOLID: añadir una figura nueva o un nuevo tipo de acción no requiere modificar las clases existentes, solo añadir código nuevo
